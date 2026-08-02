@@ -25,4 +25,16 @@ export const users = mysqlTable("users", {
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
-// TODO: Add your tables here
+export const bridgeLinks = mysqlTable("bridgeLinks", {
+  id: int("id").autoincrement().primaryKey(),
+  slug: varchar("slug", { length: 128 }).notNull().unique(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  telegramUrl: varchar("telegramUrl", { length: 512 }).notNull(),
+  isActive: int("isActive").default(1).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type BridgeLink = typeof bridgeLinks.$inferSelect;
+export type InsertBridgeLink = typeof bridgeLinks.$inferInsert;

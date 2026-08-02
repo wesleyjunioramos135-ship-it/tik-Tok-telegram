@@ -5,6 +5,8 @@ import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
 import { registerStorageProxy } from "./storageProxy";
+import { registerMetatagsMiddleware } from "./metatags";
+import { registerCacheHeadersMiddleware, registerTikTokOptimizationMiddleware } from "./cacheHeaders";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
@@ -36,6 +38,9 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   registerStorageProxy(app);
   registerOAuthRoutes(app);
+  registerMetatagsMiddleware(app);
+  registerCacheHeadersMiddleware(app);
+  registerTikTokOptimizationMiddleware(app);
   // tRPC API
   app.use(
     "/api/trpc",

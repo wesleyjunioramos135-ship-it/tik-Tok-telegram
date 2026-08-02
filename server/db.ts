@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { InsertUser, users, bridgeLinks, BridgeLink, InsertBridgeLink } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -89,4 +89,71 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+export async function getBridgeLinkBySlug(slug: string) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get bridge link: database not available");
+    return undefined;
+  }
+
+  const result = await db
+    .select()
+    .from(bridgeLinks)
+    .where(eq(bridgeLinks.slug, slug))
+    .limit(1);
+
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getAllBridgeLinks() {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get bridge links: database not available");
+    return [];
+  }
+
+  return await db.select().from(bridgeLinks).orderBy(bridgeLinks.createdAt);
+}
+
+export async function createBridgeLink(data: InsertBridgeLink) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("[Database] Cannot create bridge link: database not available");
+  }
+
+  const result = await db.insert(bridgeLinks).values(data);
+  return result;
+}
+
+export async function updateBridgeLink(
+  id: number,
+  data: Partial<InsertBridgeLink>
+) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("[Database] Cannot update bridge link: database not available");
+  }
+
+  await db.update(bridgeLinks).set(data).where(eq(bridgeLinks.id, id));
+}
+
+export async function deleteBridgeLink(id: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("[Database] Cannot delete bridge link: database not available");
+  }
+
+  await db.delete(bridgeLinks).where(eq(bridgeLinks.id, id));
+}
+
+export async function toggleBridgeLinkStatus(id: number, isActive: boolean) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("[Database] Cannot toggle bridge link: database not available");
+  }
+
+  await db
+    .update(bridgeLinks)
+    .set({ isActive: isActive ? 1 : 0 })
+    .where(eq(bridgeLinks.id, id));
+}
