@@ -6,6 +6,8 @@ Um aplicativo web profissional e moderno para converter visitantes do TikTok em 
 ![Node.js](https://img.shields.io/badge/node.js-18%2B-green.svg)
 ![React](https://img.shields.io/badge/react-19-blue.svg)
 ![TypeScript](https://img.shields.io/badge/typescript-5.9-blue.svg)
+[![Deploy Status](https://img.shields.io/badge/Vercel-Deployed-success.svg)](https://vercel.com)
+[![GitHub](https://img.shields.io/badge/GitHub-Public-blue.svg)](https://github.com/wesleyjunioramos135-ship-it/tik-Tok-telegram)
 
 ---
 
