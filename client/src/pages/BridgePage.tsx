@@ -1,148 +1,116 @@
-import { useEffect, useState } from "react";
-import { useParams } from "wouter";
-import { trpc } from "@/lib/trpc";
-import { Loader2, AlertCircle, Send } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Zap, Shield, Send } from "lucide-react";
+import { useEffect } from "react";
 
 interface BridgePageProps {
   slug: string;
 }
 
+// Dados de exemplo - em produção, isso viria de uma API
+const BRIDGE_LINKS: Record<string, any> = {
+  "exemplo": {
+    slug: "exemplo",
+    title: "Grupo VIP Exclusivo",
+    description: "Acesse nosso grupo exclusivo no Telegram com conteúdo premium, dicas diárias e suporte direto.",
+    telegramUrl: "https://t.me/seu_grupo_aqui",
+    isActive: true,
+  },
+  "youtubevip": {
+    slug: "youtubevip",
+    title: "Canal YouTube VIP",
+    description: "Membros do Telegram recebem acesso exclusivo a vídeos, tutoriais e lives privadas.",
+    telegramUrl: "https://t.me/seu_canal_youtube",
+    isActive: true,
+  },
+  "comunidade": {
+    slug: "comunidade",
+    title: "Comunidade Premium",
+    description: "Junte-se à nossa comunidade de mais de 10 mil membros ativos no Telegram.",
+    telegramUrl: "https://t.me/sua_comunidade",
+    isActive: true,
+  },
+};
+
 export default function BridgePage({ slug }: BridgePageProps) {
-  const { data: link, isLoading, error } = trpc.bridgeLinks.getBySlug.useQuery(
-    { slug },
-    {
-      retry: false,
-    }
-  );
+  const link = BRIDGE_LINKS[slug];
 
   useEffect(() => {
     if (link) {
+      // Atualizar metatags dinamicamente
       document.title = link.title;
-      const metaDescription = document.querySelector('meta[name="description"]');
-      if (metaDescription) {
-        metaDescription.setAttribute("content", link.description || link.title);
-      }
-
-      const ogTitle = document.querySelector('meta[property="og:title"]');
-      if (ogTitle) {
-        ogTitle.setAttribute("content", link.title);
-      }
-
-      const ogDescription = document.querySelector(
-        'meta[property="og:description"]'
-      );
-      if (ogDescription) {
-        ogDescription.setAttribute(
-          "content",
-          link.description || link.title
-        );
-      }
-
-      const ogUrl = document.querySelector('meta[property="og:url"]');
-      if (ogUrl) {
-        ogUrl.setAttribute("content", window.location.href);
-      }
+      document.querySelector('meta[name="description"]')?.setAttribute("content", link.description);
+      document.querySelector('meta[property="og:title"]')?.setAttribute("content", link.title);
+      document.querySelector('meta[property="og:description"]')?.setAttribute("content", link.description);
     }
   }, [link]);
 
-  if (isLoading) {
+  if (!link || !link.isActive) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-accent mx-auto mb-4" />
-          <p className="text-foreground/60">Carregando...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !link) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center px-4">
-        <div className="max-w-md w-full">
-          <div className="bg-card rounded-xl p-8 border border-border">
-            <div className="flex justify-center mb-4">
-              <AlertCircle className="w-12 h-12 text-destructive" />
-            </div>
-            <h1 className="text-2xl font-bold text-center text-foreground mb-2">
-              Link não encontrado
-            </h1>
-            <p className="text-center text-foreground/60 mb-6">
-              Desculpe, o link que você está procurando não existe ou está desativado.
-            </p>
-            <a
-              href="/"
-              className="block text-center py-2 px-4 bg-accent text-accent-foreground rounded-lg hover:opacity-90 transition-opacity"
-            >
-              Voltar ao início
-            </a>
+          <div className="w-20 h-20 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-6">
+            <span className="text-4xl">⚠️</span>
           </div>
+          <h1 className="text-4xl font-bold mb-4">404</h1>
+          <p className="text-xl text-gray-400 mb-8">Link não encontrado ou desativado</p>
+          <Button 
+            onClick={() => window.location.href = "/"}
+            className="bg-[#24A1DE] hover:bg-[#1a7aa8] text-white"
+          >
+            Voltar ao Início
+          </Button>
         </div>
       </div>
     );
   }
-
-  const handleOpenTelegram = () => {
-    window.open(link.telegramUrl, "_blank", "noopener,noreferrer");
-  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-card flex items-center justify-center px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-b from-background to-background/80 text-foreground flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {/* Card Container */}
-        <div className="bg-card rounded-2xl border border-border/50 overflow-hidden shadow-2xl">
-          {/* Header Gradient */}
-          <div className="h-32 bg-gradient-to-r from-accent/20 to-accent/10 relative overflow-hidden">
-            <div className="absolute inset-0 opacity-30">
-              <div className="absolute top-2 right-2 w-20 h-20 bg-accent/20 rounded-full blur-2xl" />
-              <div className="absolute bottom-2 left-2 w-16 h-16 bg-accent/10 rounded-full blur-2xl" />
+        {/* Card Principal */}
+        <div className="rounded-2xl border border-[#24A1DE]/20 bg-card/80 backdrop-blur-xl p-8 shadow-2xl">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#24A1DE] to-[#1a7aa8] flex items-center justify-center mx-auto mb-4">
+              <Send className="w-8 h-8 text-white" />
+            </div>
+            <h1 className="text-3xl font-bold mb-2">{link.title}</h1>
+            <p className="text-gray-400">{link.description}</p>
+          </div>
+
+          {/* Features */}
+          <div className="space-y-3 mb-8">
+            <div className="flex items-center gap-3 text-sm">
+              <Zap className="w-5 h-5 text-[#24A1DE]" />
+              <span>Acesso instantâneo ao grupo</span>
+            </div>
+            <div className="flex items-center gap-3 text-sm">
+              <Shield className="w-5 h-5 text-[#24A1DE]" />
+              <span>100% seguro e confiável</span>
+            </div>
+            <div className="flex items-center gap-3 text-sm">
+              <Send className="w-5 h-5 text-[#24A1DE]" />
+              <span>Sem redirecionamentos ocultos</span>
             </div>
           </div>
 
-          {/* Content */}
-          <div className="px-6 py-8 text-center">
-            {/* Avatar/Icon Placeholder */}
-            <div className="mb-6 flex justify-center">
-              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-accent to-accent/60 flex items-center justify-center shadow-lg">
-                <Send className="w-10 h-10 text-white" />
-              </div>
-            </div>
+          {/* CTA Button */}
+          <Button
+            onClick={() => window.open(link.telegramUrl, "_blank")}
+            className="w-full bg-[#24A1DE] hover:bg-[#1a7aa8] text-white font-semibold py-6 text-lg rounded-lg transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl hover:shadow-[#24A1DE]/50"
+          >
+            ✈️ Acessar Grupo no Telegram
+          </Button>
 
-            {/* Title */}
-            <h1 className="text-3xl font-bold text-foreground mb-3">
-              {link.title}
-            </h1>
-
-            {/* Description */}
-            {link.description && (
-              <p className="text-foreground/70 text-base leading-relaxed mb-8">
-                {link.description}
-              </p>
-            )}
-
-            {/* CTA Button */}
-            <button
-              onClick={handleOpenTelegram}
-              className="btn-telegram-glow btn-telegram-pulse w-full mb-4"
-            >
-              Acessar Grupo no Telegram
-            </button>
-
-            {/* Secondary Info */}
-            <p className="text-xs text-foreground/50 mt-6">
-              Você será redirecionado para o Telegram
-            </p>
-          </div>
-
-          {/* Footer Accent */}
-          <div className="h-1 bg-gradient-to-r from-transparent via-accent/30 to-transparent" />
+          {/* Footer */}
+          <p className="text-center text-xs text-gray-500 mt-6">
+            Se você acredita que isto é um erro, entre em contato com o suporte.
+          </p>
         </div>
 
-        {/* Trust Badge */}
-        <div className="mt-6 text-center">
-          <p className="text-xs text-foreground/40">
-            Seguro • Sem redirecionamentos • Acesso direto
-          </p>
+        {/* Trust Indicators */}
+        <div className="mt-8 text-center text-gray-500 text-xs">
+          <p>🔒 Conexão segura | ⚡ Carregamento rápido | ✅ Verificado</p>
         </div>
       </div>
     </div>
