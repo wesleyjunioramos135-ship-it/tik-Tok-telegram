@@ -8,6 +8,13 @@ interface BridgePageProps {
 
 // Dados de exemplo - em produção, isso viria de uma API
 const BRIDGE_LINKS: Record<string, any> = {
+  "default": {
+    slug: "default",
+    title: "Grupo VIP Exclusivo",
+    description: "Acesse nosso grupo exclusivo no Telegram com conteúdo premium, dicas diárias e suporte direto.",
+    telegramUrl: "https://t.me/agiuavipp",
+    isActive: true,
+  },
   "exemplo": {
     slug: "exemplo",
     title: "Grupo VIP Exclusivo",

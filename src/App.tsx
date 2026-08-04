@@ -20,7 +20,10 @@ function BridgePageRouter() {
 function Router() {
   return (
     <Switch>
-      <Route path={"/"} component={Home} />
+      {/* Main route - shows Bridge Page with default Telegram link */}
+      <Route path={"/"}>
+        {() => <BridgePage slug="default" />}
+      </Route>
       <Route path={"/admin"} component={AdminDashboard} />
       <Route path={"/404"} component={BridgeNotFound} />
       {/* Dynamic bridge page route */}
