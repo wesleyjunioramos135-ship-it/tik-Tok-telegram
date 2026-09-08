@@ -6,49 +6,101 @@ interface BridgePageProps {
   slug: string;
 }
 
+interface BridgeLink {
+  slug: string;
+  title: string;
+  description: string;
+  telegramDeepLink: string;
+  telegramIntentLink: string;
+  isActive: boolean;
+}
+
+const TELEGRAM_DOMAIN = "agiuavipp";
+const TELEGRAM_DEEP_LINK = `tg://resolve?domain=${TELEGRAM_DOMAIN}`;
+const TELEGRAM_INTENT_LINK =
+  `intent://resolve?domain=${TELEGRAM_DOMAIN}` +
+  "#Intent;package=org.telegram.messenger;scheme=tg;end;";
+
 // Dados de exemplo - em produção, isso viria de uma API
-const BRIDGE_LINKS: Record<string, any> = {
-  "default": {
+const BRIDGE_LINKS: Record<string, BridgeLink> = {
+  default: {
     slug: "default",
     title: "Grupo VIP Exclusivo",
-    description: "Acesse nosso grupo exclusivo no Telegram com conteúdo premium, dicas diárias e suporte direto.",
-    telegramUrl: "https://t.me/agiuavipp",
+    description:
+      "Acesse nosso grupo exclusivo no Telegram com conteúdo premium, dicas diárias e suporte direto.",
+    telegramDeepLink: TELEGRAM_DEEP_LINK,
+    telegramIntentLink: TELEGRAM_INTENT_LINK,
     isActive: true,
   },
-  "exemplo": {
+  exemplo: {
     slug: "exemplo",
     title: "Grupo VIP Exclusivo",
-    description: "Acesse nosso grupo exclusivo no Telegram com conteúdo premium, dicas diárias e suporte direto.",
-    telegramUrl: "https://t.me/agiuavipp",
+    description:
+      "Acesse nosso grupo exclusivo no Telegram com conteúdo premium, dicas diárias e suporte direto.",
+    telegramDeepLink: TELEGRAM_DEEP_LINK,
+    telegramIntentLink: TELEGRAM_INTENT_LINK,
     isActive: true,
   },
-  "youtubevip": {
+  youtubevip: {
     slug: "youtubevip",
     title: "Canal YouTube VIP",
-    description: "Membros do Telegram recebem acesso exclusivo a vídeos, tutoriais e lives privadas.",
-    telegramUrl: "https://t.me/agiuavipp",
+    description:
+      "Membros do Telegram recebem acesso exclusivo a vídeos, tutoriais e lives privadas.",
+    telegramDeepLink: TELEGRAM_DEEP_LINK,
+    telegramIntentLink: TELEGRAM_INTENT_LINK,
     isActive: true,
   },
-  "comunidade": {
+  comunidade: {
     slug: "comunidade",
     title: "Comunidade Premium",
-    description: "Junte-se à nossa comunidade de mais de 10 mil membros ativos no Telegram.",
-    telegramUrl: "https://t.me/agiuavipp",
+    description:
+      "Junte-se à nossa comunidade de mais de 10 mil membros ativos no Telegram.",
+    telegramDeepLink: TELEGRAM_DEEP_LINK,
+    telegramIntentLink: TELEGRAM_INTENT_LINK,
     isActive: true,
   },
 };
+
+function openTelegram(link: BridgeLink) {
+  // O deep link é disparado primeiro para abrir o app nativo sem passar por t.me.
+  window.location.href = link.telegramDeepLink;
+
+  // Se o WebView bloquear o esquema tg://, tenta o Intent do Android após um breve intervalo.
+  window.setTimeout(() => {
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    if (isAndroid && document.visibilityState === "visible") {
+      window.location.href = link.telegramIntentLink;
+    }
+  }, 1200);
+}
 
 export default function BridgePage({ slug }: BridgePageProps) {
   const link = BRIDGE_LINKS[slug];
 
   useEffect(() => {
-    if (link) {
-      // Atualizar metatags dinamicamente
-      document.title = link.title;
-      document.querySelector('meta[name="description"]')?.setAttribute("content", link.description);
-      document.querySelector('meta[property="og:title"]')?.setAttribute("content", link.title);
-      document.querySelector('meta[property="og:description"]')?.setAttribute("content", link.description);
+    if (!link || !link.isActive) {
+      return;
     }
+
+    // Atualizar metatags dinamicamente sem criar redirecionamento HTTP para o Telegram.
+    document.title = link.title;
+    document
+      .querySelector('meta[name="description"]')
+      ?.setAttribute("content", link.description);
+    document
+      .querySelector('meta[property="og:title"]')
+      ?.setAttribute("content", link.title);
+    document
+      .querySelector('meta[property="og:description"]')
+      ?.setAttribute("content", link.description);
+
+    // O atraso permite que o WebView renderize a página e mantém o CTA disponível
+    // caso a chamada automática seja bloqueada.
+    const autoOpenTimer = window.setTimeout(() => {
+      openTelegram(link);
+    }, 500);
+
+    return () => window.clearTimeout(autoOpenTimer);
   }, [link]);
 
   if (!link || !link.isActive) {
@@ -59,9 +111,11 @@ export default function BridgePage({ slug }: BridgePageProps) {
             <span className="text-4xl">⚠️</span>
           </div>
           <h1 className="text-4xl font-bold mb-4">404</h1>
-          <p className="text-xl text-gray-400 mb-8">Link não encontrado ou desativado</p>
-          <Button 
-            onClick={() => window.location.href = "/"}
+          <p className="text-xl text-gray-400 mb-8">
+            Link não encontrado ou desativado
+          </p>
+          <Button
+            onClick={() => (window.location.href = "/")}
             className="bg-[#24A1DE] hover:bg-[#1a7aa8] text-white"
           >
             Voltar ao Início
@@ -101,17 +155,26 @@ export default function BridgePage({ slug }: BridgePageProps) {
             </div>
           </div>
 
-          {/* CTA Button */}
+          {/* CTA Button: o href nativo mantém a ação disponível mesmo se o WebView segurar o JS. */}
           <Button
-            onClick={() => window.open(link.telegramUrl, "_blank")}
+            asChild
             className="w-full bg-[#24A1DE] hover:bg-[#1a7aa8] text-white font-semibold py-6 text-lg rounded-lg transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl hover:shadow-[#24A1DE]/50"
           >
-            ✈️ Acessar Grupo no Telegram
+            <a
+              href={link.telegramDeepLink}
+              onClick={event => {
+                event.preventDefault();
+                openTelegram(link);
+              }}
+              aria-label="Abrir o canal no Telegram"
+            >
+              ✈️ Acessar Canal VIP
+            </a>
           </Button>
 
-          {/* Footer */}
           <p className="text-center text-xs text-gray-500 mt-6">
-            Se você acredita que isto é um erro, entre em contato com o suporte.
+            Se o aplicativo não abrir automaticamente, toque no botão acima para
+            tentar novamente.
           </p>
         </div>
 
