@@ -72,6 +72,22 @@ export default function BridgePage({ slug }: BridgePageProps) {
     document
       .querySelector('meta[property="og:description"]')
       ?.setAttribute("content", link.description);
+
+    // O navegador interno do TikTok precisa manter o vídeo de instruções visível.
+    // No Chrome, Instagram e navegadores comuns, o HTTPS segue automaticamente
+    // para o Telegram sem exigir outro toque do visitante.
+    const isTikTokWebView = /TikTok|musical_ly|Bytedance/i.test(
+      navigator.userAgent
+    );
+    if (isTikTokWebView) {
+      return;
+    }
+
+    const redirectTimer = window.setTimeout(() => {
+      window.location.replace(link.telegramWebUrl);
+    }, 300);
+
+    return () => window.clearTimeout(redirectTimer);
   }, [link]);
 
   if (!link || !link.isActive) {
