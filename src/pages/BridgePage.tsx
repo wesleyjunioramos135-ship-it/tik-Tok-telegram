@@ -1,12 +1,5 @@
 import { Button } from "@/components/ui/button";
-import {
-  Check,
-  Clipboard,
-  ExternalLink,
-  MoreVertical,
-  Send,
-  Shield,
-} from "lucide-react";
+import { ExternalLink, Send, Shield, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface BridgePageProps {
@@ -21,18 +14,10 @@ interface BridgeLink {
   isActive: boolean;
 }
 
-type Platform = "android" | "ios" | "other";
-type CopyState = "idle" | "copied" | "error";
-
 const TELEGRAM_DOMAIN = "agiuavipp";
 const TELEGRAM_WEB_URL = `https://t.me/${TELEGRAM_DOMAIN}`;
-const ANDROID_INTENT_URL =
-  `intent://t.me/${TELEGRAM_DOMAIN}` +
-  "#Intent;scheme=https;package=com.android.chrome;" +
-  `S.browser_fallback_url=${encodeURIComponent(TELEGRAM_WEB_URL)};end;`;
-const IOS_SAFARI_URL = `x-safari-https://t.me/${TELEGRAM_DOMAIN}`;
+const GUIDE_VIDEO_URL = "https://files.catbox.moe/p7cyje.mp4";
 
-// Dados de exemplo - em produção, isso viria de uma API
 const BRIDGE_LINKS: Record<string, BridgeLink> = {
   default: {
     slug: "default",
@@ -68,57 +53,13 @@ const BRIDGE_LINKS: Record<string, BridgeLink> = {
   },
 };
 
-function getPlatform(userAgent: string): Platform {
-  if (/Android/i.test(userAgent)) {
-    return "android";
-  }
-  if (/iPhone|iPad|iPod/i.test(userAgent)) {
-    return "ios";
-  }
-  return "other";
-}
-
-function isInAppBrowser(userAgent: string) {
-  return /TikTok|musical_ly|Bytedance|Instagram|FBAN|FBAV|Facebook|Messenger|Snapchat|Pinterest/i.test(
-    userAgent
-  );
-}
-
-async function copyToClipboard(text: string): Promise<boolean> {
-  if (navigator.clipboard?.writeText) {
-    try {
-      await navigator.clipboard.writeText(text);
-      return true;
-    } catch {
-      // Alguns navegadores internos negam a Clipboard API; usa o fallback abaixo.
-    }
-  }
-
-  const textArea = document.createElement("textarea");
-  textArea.value = text;
-  textArea.setAttribute("readonly", "");
-  textArea.style.position = "fixed";
-  textArea.style.opacity = "0";
-  document.body.appendChild(textArea);
-  textArea.select();
-
-  let copied = false;
-  try {
-    copied = document.execCommand("copy");
-  } catch {
-    copied = false;
-  } finally {
-    document.body.removeChild(textArea);
-  }
-
-  return copied;
+function isTikTokWebView(userAgent: string) {
+  return /TikTok|musical_ly|Bytedance/i.test(userAgent);
 }
 
 export default function BridgePage({ slug }: BridgePageProps) {
   const link = BRIDGE_LINKS[slug];
-  const [copyState, setCopyState] = useState<CopyState>("idle");
-  const [isInApp, setIsInApp] = useState(false);
-  const [platform, setPlatform] = useState<Platform>("other");
+  const [isTikTok, setIsTikTok] = useState(false);
 
   useEffect(() => {
     if (!link || !link.isActive) {
@@ -136,42 +77,18 @@ export default function BridgePage({ slug }: BridgePageProps) {
       .querySelector('meta[property="og:description"]')
       ?.setAttribute("content", link.description);
 
-    const userAgent = navigator.userAgent;
-    const inApp = isInAppBrowser(userAgent);
-    setIsInApp(inApp);
-    setPlatform(getPlatform(userAgent));
+    const inTikTok = isTikTokWebView(navigator.userAgent);
+    setIsTikTok(inTikTok);
 
-    // Fora de TikTok, Instagram, Facebook e outros WebViews, o HTTPS segue
-    // diretamente para o Telegram sem exigir uma ação extra.
-    if (!inApp) {
+    // Instagram, Chrome, Safari e navegadores comuns seguem direto para o
+    // endereço HTTPS oficial do Telegram. No TikTok, mantemos o tutorial visível.
+    if (!inTikTok) {
       const redirectTimer = window.setTimeout(() => {
         window.location.replace(link.telegramWebUrl);
       }, 300);
       return () => window.clearTimeout(redirectTimer);
     }
   }, [link]);
-
-  async function handleCopyLink() {
-    const copied = await copyToClipboard(
-      link?.telegramWebUrl ?? TELEGRAM_WEB_URL
-    );
-    setCopyState(copied ? "copied" : "error");
-    window.setTimeout(() => setCopyState("idle"), 2500);
-  }
-
-  function handleOpenInBrowser() {
-    if (platform === "android") {
-      window.location.href = ANDROID_INTENT_URL;
-      return;
-    }
-
-    if (platform === "ios") {
-      window.location.href = IOS_SAFARI_URL;
-      return;
-    }
-
-    window.location.href = link.telegramWebUrl;
-  }
 
   if (!link || !link.isActive) {
     return (
@@ -195,9 +112,7 @@ export default function BridgePage({ slug }: BridgePageProps) {
     );
   }
 
-  // Mantém uma tela mínima enquanto o User-Agent é identificado e antes do
-  // redirecionamento automático em navegador normal.
-  if (!isInApp) {
+  if (!isTikTok) {
     return (
       <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-6">
         <p className="text-center text-sm text-muted-foreground">
@@ -207,90 +122,79 @@ export default function BridgePage({ slug }: BridgePageProps) {
     );
   }
 
-  const platformName = platform === "ios" ? "iPhone" : "Android";
-
   return (
-    <div className="min-h-screen bg-[#151711] px-4 py-8 text-[#20211d] sm:flex sm:items-center sm:justify-center">
-      <main className="mx-auto w-full max-w-md rounded-[28px] bg-[#fffef8] p-6 shadow-2xl sm:p-8">
-        <div className="mb-6 flex items-center justify-between">
-          <div className="rounded-full border-2 border-[#20211d] px-4 py-1 text-sm font-semibold">
-            Grupo VIP
+    <div className="min-h-screen bg-gradient-to-b from-background to-background/80 text-foreground flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        <div className="rounded-2xl border border-[#24A1DE]/20 bg-card/80 p-6 shadow-2xl backdrop-blur-xl sm:p-8">
+          <div className="mb-6 text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#24A1DE] to-[#1a7aa8]">
+              <Send className="h-8 w-8 text-white" />
+            </div>
+            <h1 className="mb-2 text-3xl font-bold">{link.title}</h1>
+            <p className="text-gray-400">{link.description}</p>
           </div>
-          <span className="rounded-full border-2 border-[#20211d] px-3 py-1 text-xs font-semibold text-[#4d8e94]">
-            {platformName} • navegador interno
-          </span>
-        </div>
 
-        <div className="text-center">
-          <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
-            Abra no seu navegador
-          </h1>
-          <p className="mt-4 text-base leading-relaxed text-[#5b5c55]">
-            O navegador interno do aplicativo limita alguns recursos. Toque no
-            botão abaixo para abrir o Telegram no navegador real.
+          <div className="mb-6 rounded-xl border border-[#24A1DE]/30 bg-black/20 p-3 text-center">
+            <p className="mb-3 text-sm font-semibold text-white">
+              Como abrir no navegador
+            </p>
+            <div
+              className="mx-auto overflow-hidden rounded-xl"
+              style={{ maxWidth: "300px", margin: "15px auto" }}
+            >
+              <video
+                src={GUIDE_VIDEO_URL}
+                autoPlay
+                loop
+                muted
+                playsInline
+                preload="auto"
+                aria-label="Vídeo ensinando a abrir a página no navegador"
+                style={{ width: "100%", height: "auto", display: "block" }}
+              />
+            </div>
+            <p className="text-xs leading-relaxed text-gray-400">
+              Toque nos três pontinhos no topo do TikTok e escolha “Abrir no
+              navegador” ou “Abrir no Chrome”. Depois, o Telegram será aberto
+              automaticamente.
+            </p>
+          </div>
+
+          <div className="mb-7 space-y-3">
+            <div className="flex items-center gap-3 text-sm">
+              <Zap className="h-5 w-5 text-[#24A1DE]" />
+              <span>Acesso rápido ao grupo</span>
+            </div>
+            <div className="flex items-center gap-3 text-sm">
+              <Shield className="h-5 w-5 text-[#24A1DE]" />
+              <span>Link oficial e seguro</span>
+            </div>
+          </div>
+
+          <Button
+            asChild
+            className="w-full bg-[#24A1DE] py-6 text-lg font-semibold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:bg-[#1a7aa8] hover:shadow-xl hover:shadow-[#24A1DE]/50 active:scale-95"
+          >
+            <a
+              href={link.telegramWebUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Clique aqui para entrar no Telegram"
+            >
+              <ExternalLink className="h-5 w-5" />
+              Clique aqui para entrar
+            </a>
+          </Button>
+
+          <p className="mt-5 text-center text-xs text-gray-500">
+            O botão é uma alternativa caso o vídeo não carregue.
           </p>
         </div>
 
-        <Button
-          type="button"
-          onClick={handleOpenInBrowser}
-          className="mt-7 h-14 w-full rounded-2xl border-2 border-[#20211d] bg-[#5aa0a5] text-lg font-bold text-white shadow-[0_4px_0_#20211d] hover:bg-[#4d8e94] active:translate-y-1 active:shadow-none"
-        >
-          <ExternalLink className="h-5 w-5" />
-          Abrir no navegador
-        </Button>
-
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handleCopyLink}
-          className="mt-4 h-14 w-full rounded-2xl border-2 border-[#20211d] bg-[#fffef8] text-lg font-bold text-[#20211d] shadow-[0_4px_0_#20211d] hover:bg-[#f3f1e8] active:translate-y-1 active:shadow-none"
-        >
-          {copyState === "copied" ? (
-            <>
-              <Check className="h-5 w-5" /> Copiado!
-            </>
-          ) : copyState === "error" ? (
-            "Não foi possível copiar"
-          ) : (
-            <>
-              <Clipboard className="h-5 w-5" /> Copiar link
-            </>
-          )}
-        </Button>
-
-        <section className="mt-8 rounded-2xl border-2 border-[#20211d] p-5">
-          <h2 className="text-lg font-extrabold uppercase tracking-wide">
-            Se continuar nesta tela
-          </h2>
-          <ul className="mt-4 space-y-3 text-sm leading-relaxed text-[#4b4c47]">
-            <li className="flex gap-3">
-              <MoreVertical className="mt-0.5 h-5 w-5 shrink-0 text-[#4d8e94]" />
-              <span>
-                Toque nos <strong>três pontinhos</strong> no canto superior
-                direito e escolha <strong>“Abrir no Chrome”</strong> ou
-                <strong> “Abrir no navegador”</strong>.
-              </span>
-            </li>
-            <li className="flex gap-3">
-              <Clipboard className="mt-0.5 h-5 w-5 shrink-0 text-[#4d8e94]" />
-              <span>
-                Ou toque em <strong>“Copiar link”</strong> e cole o endereço no
-                seu navegador.
-              </span>
-            </li>
-          </ul>
-          <p className="mt-5 break-all rounded-xl border-2 border-[#a9aaa1] bg-[#faf9f2] px-4 py-3 font-mono text-sm">
-            {link.telegramWebUrl}
-          </p>
-        </section>
-
-        <div className="mt-8 flex items-center justify-center gap-2 text-sm text-[#6f7068]">
-          <Send className="h-4 w-4" />
-          <Shield className="h-4 w-4" />
-          <span>Link oficial e seguro do Telegram</span>
+        <div className="mt-6 text-center text-xs text-gray-500">
+          <p>🔒 Conexão segura | ⚡ Carregamento rápido | ✅ Verificado</p>
         </div>
-      </main>
+      </div>
     </div>
   );
 }
