@@ -100,6 +100,7 @@ async function copyToClipboard(text: string) {
 export default function BridgePage({ slug }: BridgePageProps) {
   const link = BRIDGE_LINKS[slug];
   const [isTikTok, setIsTikTok] = useState(false);
+  const [showFallback, setShowFallback] = useState(false);
   const [copyState, setCopyState] = useState<CopyState>("idle");
 
   useEffect(() => {
@@ -125,9 +126,15 @@ export default function BridgePage({ slug }: BridgePageProps) {
     // endereço HTTPS oficial do Telegram. No TikTok, mantemos a orientação.
     if (!inTikTok) {
       const redirectTimer = window.setTimeout(() => {
-        window.location.replace(link.telegramWebUrl);
+        window.location.href = link.telegramWebUrl;
       }, 300);
-      return () => window.clearTimeout(redirectTimer);
+      const fallbackTimer = window.setTimeout(() => {
+        setShowFallback(true);
+      }, 1800);
+      return () => {
+        window.clearTimeout(redirectTimer);
+        window.clearTimeout(fallbackTimer);
+      };
     }
   }, [link]);
 
@@ -158,7 +165,7 @@ export default function BridgePage({ slug }: BridgePageProps) {
     );
   }
 
-  if (!isTikTok) {
+  if (!isTikTok && !showFallback) {
     return (
       <div className="min-h-screen bg-[#08131f] text-white flex items-center justify-center p-6">
         <p className="text-center text-sm text-slate-400">
@@ -198,14 +205,22 @@ export default function BridgePage({ slug }: BridgePageProps) {
 
           <div className="mb-5 rounded-2xl border border-[#24A1DE]/30 bg-gradient-to-br from-[#12344a] to-[#0c2232] p-4">
             <p className="text-center text-sm font-semibold text-white">
-              Está no TikTok? Faça assim para entrar
+              {isTikTok
+                ? "Está no TikTok? Faça assim para entrar"
+                : "O Telegram não abriu automaticamente?"}
             </p>
             <p className="mt-2 text-center text-xs leading-relaxed text-slate-300">
-              Toque nos{" "}
-              <strong className="text-[#9bdfff]">três pontinhos</strong> no topo
-              e escolha{" "}
-              <strong className="text-white">“Abrir no navegador”</strong> ou{" "}
-              <strong className="text-white">“Abrir no Chrome”</strong>.
+              {isTikTok ? (
+                <>
+                  Toque nos{" "}
+                  <strong className="text-[#9bdfff]">três pontinhos</strong> no
+                  topo e escolha{" "}
+                  <strong className="text-white">“Abrir no navegador”</strong>{" "}
+                  ou <strong className="text-white">“Abrir no Chrome”</strong>.
+                </>
+              ) : (
+                "Toque no botão abaixo para abrir o canal oficial do Telegram."
+              )}
             </p>
           </div>
 
