@@ -24,9 +24,8 @@ interface BridgeLink {
 
 type CopyState = "idle" | "copied" | "error";
 
-const TELEGRAM_DOMAIN = "agiuavipp";
+const TELEGRAM_DOMAIN = "agiuavipphdnd";
 const TELEGRAM_WEB_URL = `https://t.me/${TELEGRAM_DOMAIN}`;
-const APPOPENER_URL = "https://urlgeni.us/telegram/Lgo6QZ";
 const GUIDE_VIDEO_URL = "https://files.catbox.moe/p7cyje.mp4";
 
 const BRIDGE_LINKS: Record<string, BridgeLink> = {
@@ -217,7 +216,7 @@ export default function BridgePage({ slug }: BridgePageProps) {
               className="h-14 w-full rounded-2xl bg-[#24A1DE] text-base font-bold text-white shadow-[0_8px_24px_rgba(36,161,222,0.28)] transition-all hover:scale-[1.02] hover:bg-[#1a8fc7] active:scale-[0.98]"
             >
               <a
-                href={APPOPENER_URL}
+                href={link.telegramWebUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Clique aqui para entrar no Telegram"
