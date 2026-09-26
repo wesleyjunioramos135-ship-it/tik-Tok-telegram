@@ -9,26 +9,42 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 
+// Mude para false para reativar o site completo novamente.
+const SITE_OFFLINE = true;
+
+function OfflinePage() {
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-[#06111d] px-6 text-white">
+      <section className="w-full max-w-md rounded-3xl border border-[#24A1DE]/20 bg-[#0b1d2b] p-8 text-center shadow-2xl">
+        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-[#24A1DE]/15 text-3xl">
+          🔒
+        </div>
+        <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-[#70d5ff]">
+          Temporariamente indisponível
+        </p>
+        <h1 className="text-3xl font-bold">Site offline</h1>
+        <p className="mt-4 leading-relaxed text-slate-400">
+          Esta página está temporariamente desativada. Tente novamente mais
+          tarde.
+        </p>
+      </section>
+    </main>
+  );
+}
+
 function BridgePageRouter() {
   return (
-    <Route path="/:slug">
-      {(params) => <BridgePage slug={params.slug} />}
-    </Route>
+    <Route path="/:slug">{params => <BridgePage slug={params.slug} />}</Route>
   );
 }
 
 function Router() {
   return (
     <Switch>
-      {/* Main route - shows Bridge Page with default Telegram link */}
-      <Route path={"/"}>
-        {() => <BridgePage slug="default" />}
-      </Route>
-      <Route path={"/admin"} component={AdminDashboard} />
-      <Route path={"/404"} component={BridgeNotFound} />
-      {/* Dynamic bridge page route */}
+      <Route path="/">{() => <BridgePage slug="default" />}</Route>
+      <Route path="/admin" component={AdminDashboard} />
+      <Route path="/404" component={BridgeNotFound} />
       <BridgePageRouter />
-      {/* Final fallback route */}
       <Route component={BridgeNotFound} />
     </Switch>
   );
@@ -37,12 +53,10 @@ function Router() {
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider
-        defaultTheme="dark"
-      >
+      <ThemeProvider defaultTheme="dark">
         <TooltipProvider>
           <Toaster />
-          <Router />
+          {SITE_OFFLINE ? <OfflinePage /> : <Router />}
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
